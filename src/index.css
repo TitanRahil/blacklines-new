@@ -1,0 +1,155 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+@import "tailwindcss";
+
+:root {
+    --background: #030005;
+    --foreground: #ededed;
+    --accent: #7c3aed;
+    --accent-glow: #8b5cf6;
+    --card-bg: rgba(15, 10, 20, 0.6);
+    --font-outfit: "Outfit", sans-serif;
+}
+
+@theme inline {
+    --font-sans: var(--font-outfit), sans-serif;
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-accent: var(--accent);
+}
+
+body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-outfit), sans-serif;
+    overflow-x: hidden;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #050505;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #4c1d95;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+}
+
+.glass-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(139, 92, 246, 0.15);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+.glass-card:hover {
+    border-color: rgba(139, 92, 246, 0.4);
+    background: rgba(20, 15, 30, 0.7);
+    box-shadow: 0 0 25px rgba(124, 58, 237, 0.2);
+}
+
+.text-glow {
+    text-shadow: 0 0 25px rgba(139, 92, 246, 0.6);
+}
+
+.purple-glow-box {
+    box-shadow: 0 0 40px rgba(124, 58, 237, 0.15);
+}
+
+.hero-gradient {
+    background: linear-gradient(to bottom, rgba(5, 5, 5, 0) 0%, rgba(3, 0, 5, 0.8) 80%, rgba(3, 0, 5, 1) 100%);
+}
+
+.animate-float {
+    animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+@layer utilities {
+    .text-stroke {
+        -webkit-text-stroke: 2px white;
+        color: transparent;
+    }
+
+    .text-stroke-sm {
+        -webkit-text-stroke: 1px rgba(255, 255, 255, 0.5);
+        color: transparent;
+    }
+
+    .text-stroke-accent {
+        -webkit-text-stroke: 2px #a855f7;
+        /* purple-500 */
+        color: transparent;
+    }
+}
+
+.animate-shine {
+    background: linear-gradient(to right,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.8) 50%,
+            rgba(255, 255, 255, 0) 100%);
+    background-size: 200% auto;
+    color: #000;
+    background-clip: text;
+    -webkit-background-clip: text;
+    animation: shine 5s linear infinite;
+}
+
+@keyframes shine {
+    to {
+        background-position: 200% center;
+    }
+}
+
+.text-glass-magic {
+    color: rgba(255, 255, 255, 0.02);
+    /* Extremely subtle fill */
+    background: linear-gradient(110deg,
+            rgba(255, 255, 255, 0) 40%,
+            rgba(255, 255, 255, 0.9) 50%,
+            rgba(255, 255, 255, 0) 60%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-stroke: 2px rgba(255, 255, 255, 0.6);
+    animation: shine 5s linear infinite;
+    text-shadow: 0 0 30px rgba(124, 58, 237, 0.2);
+    /* Subtle purple backing glow */
+}
+
+.text-glass-premium {
+    color: #ffffff;
+    /* Solid white for mobile readability */
+    filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.5));
+}
+
+@media (min-width: 768px) {
+    .text-glass-premium {
+        color: rgba(255, 255, 255, 0.1);
+        /* Flat semi-transparent fill */
+        -webkit-text-stroke: 2px rgba(255, 255, 255, 0.9);
+        filter: drop-shadow(0 0 15px rgba(168, 85, 247, 0.4));
+        /* Purple glow */
+    }
+}
