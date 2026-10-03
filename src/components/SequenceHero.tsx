@@ -13,25 +13,43 @@ export default function SequenceHero() {
         return false; // Default to desktop if server-side (not the case here usually but safe)
     };
 
-    const [loadedCount, setLoadedCount] = useState(0);
     const [isMobile, setIsMobile] = useState(getInitialMobileState);
-    const [folderPath, setFolderPath] = useState(() => getInitialMobileState() ? "/mobile-imgs" : "/imgs");
-    const frameCount = 200;
-    const [isReady, setIsReady] = useState(false);
+    const [folderPath, setFolderPath] = useState(() => getInitialMobileState() ? "/frames-gtr-mobile" : "/frames");
+    const frameCount = 192;
+    // We now enforce the strictest loading block possible. 
+    // The user prefers watching a loaders for 7-8s rather than experiencing broken 12fps scrolls while loading.
+    const requiredFrames = frameCount;
+    const [loadedCount, setLoadedCount] = useState(0);
+    const isFullyLoaded = loadedCount >= requiredFrames;
 
-    // We use a ref to store images so renderFrame can access them instantly without dependency cycle re-renders
-    const imagesRef = useRef<HTMLImageElement[]>([]);
+    // Strict Scroll Lock during loading
+    useEffect(() => {
+        if (!isFullyLoaded) {
+            document.documentElement.style.overflow = "hidden";
+            document.body.style.overflow = "hidden";
+        } else {
+            document.documentElement.style.overflow = "unset";
+            document.body.style.overflow = "unset";
+        }
+    }, [isFullyLoaded]);
+
+    const targetFrame = useRef(0);
+    const currentFrame = useRef(-1);
+    const smoothFrame = useRef(0);
+
+    // We use a ref to store ImageBitmaps (pure GPU textures) instead of heavy DOM Image elements
+    const imagesRef = useRef<(ImageBitmap | null)[]>([]);
 
     const renderFrame = useCallback((index: number) => {
         const canvas = canvasRef.current;
         const img = imagesRef.current[index];
 
-        if (canvas && img && img.complete && img.naturalWidth > 0) {
-            const context = canvas.getContext("2d");
+        // Since it's an ImageBitmap, its existence implies it is fully decoded and ready to draw
+        if (canvas && img && img.width > 0) {
+            // Optimize composite performance and remove redundant clearRect.
+            // desynchronized: true bypasses composition queues for ultra-low latency rendering.
+            const context = canvas.getContext("2d", { alpha: false, desynchronized: true });
             if (!context) return;
-
-            // Clear screen
-            context.clearRect(0, 0, canvas.width, canvas.height);
 
             const hRatio = canvas.width / img.width;
             const vRatio = canvas.height / img.height;
@@ -40,6 +58,8 @@ export default function SequenceHero() {
             const centerShift_x = (canvas.width - img.width * ratio) / 2;
             const centerShift_y = (canvas.height - img.height * ratio) / 2;
 
+            // Clear the canvas explicitly because different aspect ratios might leave trails if ratio != 1
+            context.clearRect(0, 0, canvas.width, canvas.height);
             context.drawImage(img, 0, 0, img.width, img.height, centerShift_x, centerShift_y, img.width * ratio, img.height * ratio);
         }
     }, []);
@@ -60,7 +80,7 @@ export default function SequenceHero() {
             });
 
             setFolderPath(prev => {
-                const target = isSmall ? "/mobile-imgs" : "/imgs";
+                const target = isSmall ? "/frames-gtr-mobile" : "/frames";
                 if (prev !== target) {
                     console.log("Blacklines: Media Query Change -> Switching to:", target);
                     return target;
@@ -75,44 +95,30 @@ export default function SequenceHero() {
         // Listener for changes
         mql.addEventListener("change", handleMediaChange);
 
-        // Separate Handler for Canvas sizing (Pixel fidelity)
+        // Handler for updating frames on window resize (Mobile URL bar, etc)
+        // Note: Canvas dimensions are fixed to 1920x1080 and stretched via CSS object-fit: cover 
+        // to bypass the CPU and utilize instanced GPU scaling.
         const resizeCanvasHandler = () => {
-            if (canvasRef.current) {
-                canvasRef.current.width = window.innerWidth;
-                canvasRef.current.height = window.innerHeight;
+            if (canvasRef.current && containerRef.current) {
+                const container = containerRef.current;
+                const rect = container.getBoundingClientRect();
+                const viewportHeight = window.innerHeight;
+                const maxScroll = rect.height - viewportHeight;
 
-                // FIX: Calculate correct frame based on current scroll position instead of resetting to 0
-                // This prevents flickering on mobile when URL bar resizes
-                if (containerRef.current) {
-                    const container = containerRef.current;
-                    const rect = container.getBoundingClientRect();
-                    const viewportHeight = window.innerHeight;
-                    const maxScroll = rect.height - viewportHeight;
+                let progress = Math.abs(rect.top) / maxScroll;
+                if (rect.top > 0) progress = 0;
 
-                    // We need to calculate progress relative to the container's position in the viewport
-                    // Since the component is sticky, rect.top changes as we scroll until it sticks? 
-                    // No, the parent is the container, the sticky is inside.
-                    // Wait, existing logic: parentTop = rect.top.
-                    // If rect.top is negative, we are scrolling into it.
+                progress = Math.max(0, Math.min(1, progress));
 
-                    // However, during a resize, rect.top might shift slightly.
-                    // Let's use the exact same math as handleScroll.
-
-                    let progress = Math.abs(rect.top) / maxScroll;
-
-                    // If rect.top is positive (not reached yet), progress is 0.
-                    if (rect.top > 0) progress = 0;
-
-                    progress = Math.max(0, Math.min(1, progress));
-
-                    const frameIndex = Math.min(
-                        frameCount - 1,
-                        Math.floor(progress * frameCount)
-                    );
-                    renderFrame(frameIndex);
-                } else {
-                    renderFrame(0);
-                }
+                const frameIndex = Math.min(
+                    frameCount - 1,
+                    Math.floor(progress * frameCount)
+                );
+                targetFrame.current = frameIndex;
+                smoothFrame.current = frameIndex;
+            } else {
+                targetFrame.current = 0;
+                smoothFrame.current = 0;
             }
         };
 
@@ -131,46 +137,105 @@ export default function SequenceHero() {
     useEffect(() => {
         // Reset state for new load
         setLoadedCount(0);
-        setIsReady(false);
-        imagesRef.current = [];
+        imagesRef.current = new Array(frameCount);
+        currentFrame.current = -1;
 
         const currentPath = folderPath;
-        const loadedImages: HTMLImageElement[] = [];
         let isCancelled = false;
 
-        // Pre-allocate array and start loading all images in parallel
-        for (let i = 1; i <= frameCount; i++) {
-            const img = new Image();
-            const frameStr = i.toString().padStart(3, "0");
-            img.src = `${currentPath}/ezgif-frame-${frameStr}.jpg`;
+        // Smart 2-Pass Loading: Load highly spaced frames first (low fps preview)
+        // Then fill in the rest for buttery smooth playback.
+        const loadOrder: number[] = [];
+        const step = isMobile ? 8 : 12;
+        for (let i = 1; i <= frameCount; i += step) loadOrder.push(i);
+        for (let i = 1; i <= frameCount; i++) if ((i - 1) % step !== 0) loadOrder.push(i);
 
-            img.onload = () => {
-                if (isCancelled) return;
-                setLoadedCount((prev) => prev + 1);
-                // Force render the first frame as soon as it loads to prevent black screen
-                if (i === 1) {
-                    requestAnimationFrame(() => {
-                        renderFrame(0);
-                        setIsReady(true);
-                    });
-                }
-            };
+        loadOrder.forEach((i) => {
+            const frameStr = i.toString().padStart(4, "0");
+            const url = `${currentPath}/${frameStr}.webp`;
 
-            img.onerror = () => {
-                if (isCancelled) return;
-                setLoadedCount((prev) => prev + 1);
-            };
+            // Using the ultra-optimized Fetch API + Blob approach to completely bypass the DOM element overhead.
+            // createImageBitmap converts the compressed WebP bytes directly into a GPU-ready pixel texture buffer.
+            fetch(url, { priority: i <= 20 ? "high" : "auto" } as RequestInit)
+                .then(res => res.blob())
+                .then(blob => createImageBitmap(blob, { premultiplyAlpha: 'none' }))
+                .then(bitmap => {
+                    if (isCancelled) {
+                        bitmap.close();
+                        return;
+                    }
+                    imagesRef.current[i - 1] = bitmap;
+                    setLoadedCount(prev => prev + 1);
+                })
+                .catch(() => {
+                    // Preloader continues even on a single frame load failure (e.g. 404)
+                    if (!isCancelled) {
+                        setLoadedCount(prev => prev + 1);
+                    }
+                });
+        });
 
-            loadedImages.push(img);
-        }
-        imagesRef.current = loadedImages;
-
+        // Memory Management: Explicitly close old ImageBitmaps if the component unmounts
+        // or re-renders an entirely new sequence to prevent VRAM memory leaks.
         return () => {
             isCancelled = true;
+            imagesRef.current.forEach(bitmap => {
+                if (bitmap) bitmap.close();
+            });
         };
-    }, [folderPath, renderFrame]);
+    }, [folderPath, frameCount, isMobile]);
 
-    // 3. Scroll Handler
+    // 3. Render Loop Interpolator
+    // Checks target frame and tries to render the best available loaded frame towards target
+    useEffect(() => {
+        let animationFrameId: number;
+
+        const loop = () => {
+            if (canvasRef.current) {
+                // Lenis inherently smooths the scroll input! 
+                // Manual frame-lerping is completely deleted to eliminate double-smoothing "heavy" delays.
+                const target = targetFrame.current;
+                const current = currentFrame.current;
+
+                if (target !== current) {
+                    let bestFrame = -1;
+                    
+                    // Look back from target to find the most recently loaded frame!
+                    // If moving forward:
+                    if (target > current) {
+                        for (let i = target; i >= current; i--) {
+                            const img = imagesRef.current[i];
+                            if (img) {
+                                bestFrame = i;
+                                break;
+                            }
+                        }
+                    } else {
+                        // If moving backward:
+                        for (let i = target; i <= current; i++) {
+                            const img = imagesRef.current[i];
+                            if (img) {
+                                bestFrame = i;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (bestFrame !== -1 && bestFrame !== current) {
+                        try {
+                            renderFrame(bestFrame);
+                            currentFrame.current = bestFrame;
+                        } catch(e) {}
+                    }
+                }
+            }
+            animationFrameId = requestAnimationFrame(loop);
+        };
+        loop();
+        return () => cancelAnimationFrame(animationFrameId);
+    }, [renderFrame]);
+
+    // 4. Scroll Handler (Updates Target only)
     useEffect(() => {
         if (!canvasRef.current) return;
 
@@ -185,52 +250,68 @@ export default function SequenceHero() {
             const maxScroll = rect.height - viewportHeight;
 
             let progress = Math.abs(parentTop) / maxScroll;
+            if (parentTop > 0) progress = 0;
             progress = Math.max(0, Math.min(1, progress));
 
-            const frameIndex = Math.min(
+            targetFrame.current = Math.min(
                 frameCount - 1,
                 Math.floor(progress * frameCount)
             );
-
-            requestAnimationFrame(() => renderFrame(frameIndex));
         };
 
-        window.addEventListener("scroll", handleScroll);
+        window.addEventListener("scroll", handleScroll, { passive: true });
         handleScroll();
 
         return () => window.removeEventListener("scroll", handleScroll);
-    }, [renderFrame, frameCount]);
+    }, [frameCount]);
+
+    // Calculate actual progress from 0 to 1
+    const actualProgress = loadedCount / requiredFrames;
+    
+    // Apply a quadratic ease-out function (1 - (1 - x)^2) to make the initial loading 
+    // psychologically seem much faster, but takes the exact same total time to reach 100%.
+    const easedProgress = 1 - Math.pow(1 - actualProgress, 2);
+    const loadProgress = Math.min(100, Math.floor(easedProgress * 100));
 
     return (
-        <div ref={containerRef} className={`relative ${isMobile ? 'h-[250vh]' : 'h-[400vh]'} bg-black`}>
+        <div ref={containerRef} className={`relative ${isMobile ? 'h-[300vh]' : 'h-[600vh]'} bg-black`}>
+            
+            {/* Massive Full-Screen Preloader */}
+            <div className={`fixed inset-0 z-[100] bg-[#030005] flex flex-col items-center justify-center transition-opacity duration-1000 ${isFullyLoaded ? "opacity-0 pointer-events-none" : "opacity-100 pointer-events-auto"}`}>
+                <div className="w-11/12 max-w-md flex flex-col items-center gap-6">
+                    <h2 className="text-white text-3xl md:text-5xl font-black tracking-[0.4em] uppercase mb-4 italic">
+                        BLACKLINES
+                    </h2>
+                    
+                    <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden relative">
+                        <div 
+                            className="absolute top-0 left-0 h-full bg-purple-500 shadow-[0_0_20px_#7c3aed] transition-[width] duration-300 ease-out"
+                            style={{ width: `${loadProgress}%` }}
+                        />
+                    </div>
+                    
+                    <div className="flex justify-between w-full text-xs font-mono tracking-widest text-purple-400 uppercase font-bold">
+                        <span>Loading Engine Textures</span>
+                        <span>{loadProgress}%</span>
+                    </div>
+                </div>
+            </div>
+
             <div className="sticky top-0 h-screen w-full overflow-hidden">
-                {/* Fallback Background Image to prevent black void before first frame loads */}
+                {/* Fallback Background Image visually behind canvas */}
                 <div
-                    className="absolute inset-0 bg-cover bg-center z-0 transition-opacity duration-700"
-                    style={{
-                        backgroundImage: `url('${folderPath}/ezgif-frame-001.jpg')`,
-                        opacity: isReady ? 0 : 1 // Hide only when first frame is ready
-                    }}
+                    className="absolute inset-0 bg-cover bg-center z-0"
+                    style={{ backgroundImage: `url('${folderPath}/0001.webp')` }}
                 />
 
                 <canvas
                     ref={canvasRef}
                     className="w-full h-full object-cover relative z-10"
-                    width={1920}
-                    height={1080}
+                    width={isMobile ? 1080 : 1920}
+                    height={isMobile ? 1920 : 1080}
                 />
 
-                {/* Loading Overlay - Only block for the first 17% (approx 35 frames) to allow quick start */}
-                {loadedCount < 35 && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-50 transition-opacity duration-500 backdrop-blur-sm">
-                        <div className="flex flex-col items-center">
-                            <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-                            <p className="text-purple-400 font-bold tracking-widest text-sm">
-                                INITIALIZING SYSTEM... {Math.round((loadedCount / 35) * 100)}%
-                            </p>
-                        </div>
-                    </div>
-                )}
+                {/* Instant Loading - The overlay is removed to allow low-fps scroll right away */}
 
                 {/* Vignette */}
                 <div className="absolute inset-0 bg-radial-gradient from-transparent to-black pointer-events-none opacity-50 z-20" />

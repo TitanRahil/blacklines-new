@@ -1,36 +1,34 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Blacklines Motorsport
+
+High-performance digital experience and catalog for Blacklines Motorsport — specializing in JDM tuning, aerodynamic components, bespoke builds, and motorsport culture.
+
+## Tech Stack
+
+- **Framework**: [React 18](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
+- **Bundler**: [Vite](https://vitejs.dev/)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
+- **Smooth Scrolling**: [@studio-freight/lenis](https://github.com/darkroomengineering/lenis)
+- **Routing**: [React Router v6](https://reactrouter.com/)
+
+## Features
+
+- **Interactive Canvas Frame Scrubber**: GPU-accelerated Apple-style interactive sequence hero (`SequenceHero`) with responsive mobile & desktop frame streams.
+- **Modifications Catalog**: Spoilers, Engine, Side Skirts, Wheels, Wraps, and Custom Interiors.
+- **Featured Builds**: Deep-dive showcases for iconic platforms (Toyota Supra MK4, Nissan Skyline R34 GT-R, Mazda RX-7 FD).
+- **Responsive Navigation & Fluid UI**: Custom glassmorphism, cyberpunk decrypt animations, and smooth hash-scrolling.
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+# Install dependencies
+npm install
+
+# Start local development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
