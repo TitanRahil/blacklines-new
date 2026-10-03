@@ -97,23 +97,39 @@ export default function SequenceHero() {
 
         // Handler for updating frames on window resize (Mobile URL bar, etc)
         // Note: Canvas dimensions are fixed to 1920x1080 and stretched via CSS object-fit: cover 
-        // to bypass the CPU and utilize instanced GPU scaling.
+        // Helper to map scroll position to responsive frame index with end-zone clamp
+        const getFrameFromScroll = () => {
+            if (!containerRef.current) return 0;
+            const container = containerRef.current;
+            const rect = container.getBoundingClientRect();
+            const viewportHeight = window.innerHeight;
+            const maxScroll = rect.height - viewportHeight;
+            if (maxScroll <= 0) return 0;
+
+            let progress = Math.abs(rect.top) / maxScroll;
+            if (rect.top > 0) progress = 0;
+            progress = Math.max(0, Math.min(1, progress));
+
+            // Complete full animation by 85% of scroll distance.
+            // Leaves an exit buffer on the final frame so the sequence never crawls 1-by-1 at the tail.
+            const ANIMATION_END_PERCENT = 0.85;
+            const animProgress = progress / ANIMATION_END_PERCENT;
+
+            if (animProgress >= 0.96) {
+                return frameCount - 1;
+            }
+
+            // Power 0.9 curve provides instant pickup on initial scroll
+            const curvedProgress = Math.pow(animProgress, 0.9);
+            return Math.min(
+                frameCount - 1,
+                Math.floor(curvedProgress * frameCount)
+            );
+        };
+
         const resizeCanvasHandler = () => {
             if (canvasRef.current && containerRef.current) {
-                const container = containerRef.current;
-                const rect = container.getBoundingClientRect();
-                const viewportHeight = window.innerHeight;
-                const maxScroll = rect.height - viewportHeight;
-
-                let progress = Math.abs(rect.top) / maxScroll;
-                if (rect.top > 0) progress = 0;
-
-                progress = Math.max(0, Math.min(1, progress));
-
-                const frameIndex = Math.min(
-                    frameCount - 1,
-                    Math.floor(progress * frameCount)
-                );
+                const frameIndex = getFrameFromScroll();
                 targetFrame.current = frameIndex;
                 smoothFrame.current = frameIndex;
             } else {
@@ -131,7 +147,7 @@ export default function SequenceHero() {
             mql.removeEventListener("change", handleMediaChange);
             window.removeEventListener("resize", resizeCanvasHandler);
         };
-    }, [renderFrame]);
+    }, [renderFrame, frameCount]);
 
     // 2. Handle Image Loading whenever folderPath changes
     useEffect(() => {
@@ -248,14 +264,27 @@ export default function SequenceHero() {
 
             const parentTop = rect.top;
             const maxScroll = rect.height - viewportHeight;
+            if (maxScroll <= 0) return;
 
             let progress = Math.abs(parentTop) / maxScroll;
             if (parentTop > 0) progress = 0;
             progress = Math.max(0, Math.min(1, progress));
 
+            // Complete full animation by 85% of scroll distance.
+            // Leaves an exit buffer on the final frame so the sequence never crawls 1-by-1 at the tail.
+            const ANIMATION_END_PERCENT = 0.85;
+            const animProgress = progress / ANIMATION_END_PERCENT;
+
+            if (animProgress >= 0.96) {
+                targetFrame.current = frameCount - 1;
+                return;
+            }
+
+            // Power 0.9 curve provides instant pickup on initial scroll
+            const curvedProgress = Math.pow(animProgress, 0.9);
             targetFrame.current = Math.min(
                 frameCount - 1,
-                Math.floor(progress * frameCount)
+                Math.floor(curvedProgress * frameCount)
             );
         };
 
@@ -274,7 +303,7 @@ export default function SequenceHero() {
     const loadProgress = Math.min(100, Math.floor(easedProgress * 100));
 
     return (
-        <div ref={containerRef} className={`relative ${isMobile ? 'h-[300vh]' : 'h-[600vh]'} bg-black`}>
+        <div ref={containerRef} className={`relative ${isMobile ? 'h-[180vh]' : 'h-[280vh]'} bg-black`}>
             
             {/* Massive Full-Screen Preloader */}
             <div className={`fixed inset-0 z-[100] bg-[#030005] flex flex-col items-center justify-center transition-opacity duration-1000 ${isFullyLoaded ? "opacity-0 pointer-events-none" : "opacity-100 pointer-events-auto"}`}>
