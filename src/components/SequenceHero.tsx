@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useBrand } from "../context/BrandContext";
 
 export default function SequenceHero() {
+    const brand = useBrand();
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     // Images are stored in ref for performance, no state needed for re-renders since canvas handles it
@@ -22,12 +24,15 @@ export default function SequenceHero() {
     const [loadedCount, setLoadedCount] = useState(0);
     const isFullyLoaded = loadedCount >= requiredFrames;
 
-    // Strict Scroll Lock during loading
+    // Strict Scroll Lock & Lenis freeze during loading
     useEffect(() => {
+        const lenis = (window as unknown as { __lenis?: { stop: () => void; start: () => void } }).__lenis;
         if (!isFullyLoaded) {
+            lenis?.stop();
             document.documentElement.style.overflow = "hidden";
             document.body.style.overflow = "hidden";
         } else {
+            lenis?.start();
             document.documentElement.style.overflow = "unset";
             document.body.style.overflow = "unset";
         }
@@ -35,34 +40,136 @@ export default function SequenceHero() {
 
     const targetFrame = useRef(0);
     const currentFrame = useRef(-1);
-    const smoothFrame = useRef(0);
+    const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
+    const isHeroVisible = useRef(true);
+    const renderRafId = useRef<number | null>(null);
+    const containerHeightRef = useRef(0);
+    const viewportHeightRef = useRef(0);
 
     // We use a ref to store ImageBitmaps (pure GPU textures) instead of heavy DOM Image elements
     const imagesRef = useRef<(ImageBitmap | null)[]>([]);
+
+    const updateMeasurements = useCallback(() => {
+        if (containerRef.current) {
+            containerHeightRef.current = containerRef.current.offsetHeight;
+        }
+        viewportHeightRef.current = window.innerHeight;
+    }, []);
+
+    const calculateTargetFrame = useCallback((scrollPosition: number) => {
+        const maxScroll = containerHeightRef.current - viewportHeightRef.current;
+        if (maxScroll <= 0) return 0;
+
+        let progress = scrollPosition / maxScroll;
+        progress = Math.max(0, Math.min(1, progress));
+
+        const ANIMATION_END_PERCENT = 0.86;
+        const animProgress = progress / ANIMATION_END_PERCENT;
+
+        if (animProgress >= 0.98) {
+            return frameCount - 1;
+        }
+
+        return Math.min(
+            frameCount - 1,
+            Math.floor(animProgress * (frameCount - 1))
+        );
+    }, [frameCount]);
 
     const renderFrame = useCallback((index: number) => {
         const canvas = canvasRef.current;
         const img = imagesRef.current[index];
 
-        // Since it's an ImageBitmap, its existence implies it is fully decoded and ready to draw
         if (canvas && img && img.width > 0) {
-            // Optimize composite performance and remove redundant clearRect.
-            // desynchronized: true bypasses composition queues for ultra-low latency rendering.
-            const context = canvas.getContext("2d", { alpha: false, desynchronized: true });
+            if (!ctxRef.current) {
+                ctxRef.current = canvas.getContext("2d", { alpha: false, desynchronized: true });
+            }
+            const context = ctxRef.current;
             if (!context) return;
 
-            const hRatio = canvas.width / img.width;
-            const vRatio = canvas.height / img.height;
-            const ratio = Math.max(hRatio, vRatio);
+            // Direct zero-transform fast-path when texture matches canvas dimensions
+            if (canvas.width === img.width && canvas.height === img.height) {
+                context.drawImage(img, 0, 0);
+            } else {
+                const hRatio = canvas.width / img.width;
+                const vRatio = canvas.height / img.height;
+                const ratio = Math.max(hRatio, vRatio);
 
-            const centerShift_x = (canvas.width - img.width * ratio) / 2;
-            const centerShift_y = (canvas.height - img.height * ratio) / 2;
+                const centerShift_x = (canvas.width - img.width * ratio) * 0.5;
+                const centerShift_y = (canvas.height - img.height * ratio) * 0.5;
 
-            // Clear the canvas explicitly because different aspect ratios might leave trails if ratio != 1
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            context.drawImage(img, 0, 0, img.width, img.height, centerShift_x, centerShift_y, img.width * ratio, img.height * ratio);
+                context.drawImage(img, 0, 0, img.width, img.height, centerShift_x, centerShift_y, img.width * ratio, img.height * ratio);
+            }
         }
     }, []);
+
+    // 60-120 FPS render scheduler with recursive catch-up loop:
+    // Only fires RAF when frames differ, continuously stepping until caught up.
+    const requestRender = useCallback(() => {
+        if (!isHeroVisible.current || renderRafId.current !== null) return;
+
+        const tick = () => {
+            renderRafId.current = null;
+            if (!isHeroVisible.current || !canvasRef.current) return;
+
+            const target = targetFrame.current;
+            const current = currentFrame.current;
+
+            if (target !== current) {
+                let bestFrame = -1;
+                // Direct lookup first
+                if (imagesRef.current[target]) {
+                    bestFrame = target;
+                } else if (target > current) {
+                    for (let i = target; i >= current; i--) {
+                        if (imagesRef.current[i]) {
+                            bestFrame = i;
+                            break;
+                        }
+                    }
+                } else {
+                    for (let i = target; i <= current; i++) {
+                        if (imagesRef.current[i]) {
+                            bestFrame = i;
+                            break;
+                        }
+                    }
+                }
+
+                if (bestFrame !== -1 && bestFrame !== current) {
+                    try {
+                        renderFrame(bestFrame);
+                        currentFrame.current = bestFrame;
+                    } catch (e) {}
+                }
+            }
+
+            // Keep loop alive if we have pending frames that are ready to draw
+            if (currentFrame.current !== targetFrame.current && imagesRef.current[targetFrame.current]) {
+                renderRafId.current = requestAnimationFrame(tick);
+            }
+        };
+
+        renderRafId.current = requestAnimationFrame(tick);
+    }, [renderFrame]);
+
+    // IntersectionObserver: Suspends rendering when hero is scrolled offscreen
+    useEffect(() => {
+        if (!containerRef.current) return;
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                const wasVisible = isHeroVisible.current;
+                isHeroVisible.current = entry.isIntersecting;
+                if (!wasVisible && entry.isIntersecting) {
+                    requestRender();
+                }
+            },
+            { rootMargin: "200px 0px" }
+        );
+
+        observer.observe(containerRef.current);
+        return () => observer.disconnect();
+    }, [requestRender]);
 
     // 1. Handle resizing / mobile detection
     // 1. Handle resizing / mobile detection
@@ -82,7 +189,7 @@ export default function SequenceHero() {
             setFolderPath(prev => {
                 const target = isSmall ? "/frames-gtr-mobile" : "/frames";
                 if (prev !== target) {
-                    console.log("Blacklines: Media Query Change -> Switching to:", target);
+                    console.log("Atelier: Media Query Change -> Switching to:", target);
                     return target;
                 }
                 return prev;
@@ -97,44 +204,15 @@ export default function SequenceHero() {
 
         // Handler for updating frames on window resize (Mobile URL bar, etc)
         // Note: Canvas dimensions are fixed to 1920x1080 and stretched via CSS object-fit: cover 
-        // Helper to map scroll position to responsive frame index with end-zone clamp
-        const getFrameFromScroll = () => {
-            if (!containerRef.current) return 0;
-            const container = containerRef.current;
-            const rect = container.getBoundingClientRect();
-            const viewportHeight = window.innerHeight;
-            const maxScroll = rect.height - viewportHeight;
-            if (maxScroll <= 0) return 0;
-
-            let progress = Math.abs(rect.top) / maxScroll;
-            if (rect.top > 0) progress = 0;
-            progress = Math.max(0, Math.min(1, progress));
-
-            // Complete full animation by 85% of scroll distance.
-            // Leaves an exit buffer on the final frame so the sequence never crawls 1-by-1 at the tail.
-            const ANIMATION_END_PERCENT = 0.85;
-            const animProgress = progress / ANIMATION_END_PERCENT;
-
-            if (animProgress >= 0.96) {
-                return frameCount - 1;
-            }
-
-            // Power 0.9 curve provides instant pickup on initial scroll
-            const curvedProgress = Math.pow(animProgress, 0.9);
-            return Math.min(
-                frameCount - 1,
-                Math.floor(curvedProgress * frameCount)
-            );
-        };
-
         const resizeCanvasHandler = () => {
+            ctxRef.current = null;
+            updateMeasurements();
             if (canvasRef.current && containerRef.current) {
-                const frameIndex = getFrameFromScroll();
+                const frameIndex = calculateTargetFrame(window.scrollY);
                 targetFrame.current = frameIndex;
-                smoothFrame.current = frameIndex;
+                requestRender();
             } else {
                 targetFrame.current = 0;
-                smoothFrame.current = 0;
             }
         };
 
@@ -147,11 +225,10 @@ export default function SequenceHero() {
             mql.removeEventListener("change", handleMediaChange);
             window.removeEventListener("resize", resizeCanvasHandler);
         };
-    }, [renderFrame, frameCount]);
+    }, [frameCount, requestRender]);
 
-    // 2. Handle Image Loading whenever folderPath changes
+    // 2. High-Efficiency Concurrency-Pooled Loader with RAF Batching
     useEffect(() => {
-        // Reset state for new load
         setLoadedCount(0);
         imagesRef.current = new Array(frameCount);
         currentFrame.current = -1;
@@ -159,20 +236,37 @@ export default function SequenceHero() {
         const currentPath = folderPath;
         let isCancelled = false;
 
-        // Smart 2-Pass Loading: Load highly spaced frames first (low fps preview)
-        // Then fill in the rest for buttery smooth playback.
         const loadOrder: number[] = [];
         const step = isMobile ? 8 : 12;
+        // Pass 1: Spaced keyframes for immediate responsive scrubbing
         for (let i = 1; i <= frameCount; i += step) loadOrder.push(i);
+        // Pass 2: In-between frames to achieve 60fps
         for (let i = 1; i <= frameCount; i++) if ((i - 1) % step !== 0) loadOrder.push(i);
 
-        loadOrder.forEach((i) => {
+        let loadedCounter = 0;
+        let rafBatchId: number | null = null;
+
+        const notifyProgress = () => {
+            if (rafBatchId !== null) return;
+            rafBatchId = requestAnimationFrame(() => {
+                rafBatchId = null;
+                if (!isCancelled) {
+                    setLoadedCount(loadedCounter);
+                }
+            });
+        };
+
+        // Smooth concurrent worker pool (concurrency: 8 prevents socket saturation & UI thread stalls)
+        const CONCURRENCY = 8;
+        let nextIndex = 0;
+
+        const loadNext = () => {
+            if (isCancelled || nextIndex >= loadOrder.length) return;
+            const i = loadOrder[nextIndex++];
             const frameStr = i.toString().padStart(4, "0");
             const url = `${currentPath}/${frameStr}.webp`;
 
-            // Using the ultra-optimized Fetch API + Blob approach to completely bypass the DOM element overhead.
-            // createImageBitmap converts the compressed WebP bytes directly into a GPU-ready pixel texture buffer.
-            fetch(url, { priority: i <= 20 ? "high" : "auto" } as RequestInit)
+            fetch(url)
                 .then(res => res.blob())
                 .then(blob => createImageBitmap(blob, { premultiplyAlpha: 'none' }))
                 .then(bitmap => {
@@ -181,118 +275,76 @@ export default function SequenceHero() {
                         return;
                     }
                     imagesRef.current[i - 1] = bitmap;
-                    setLoadedCount(prev => prev + 1);
+                    loadedCounter++;
+                    notifyProgress();
+                    if (currentFrame.current === -1 && i === 1) {
+                        requestRender();
+                    } else if (currentFrame.current !== targetFrame.current) {
+                        requestRender();
+                    }
+                    loadNext();
                 })
                 .catch(() => {
-                    // Preloader continues even on a single frame load failure (e.g. 404)
                     if (!isCancelled) {
-                        setLoadedCount(prev => prev + 1);
+                        loadedCounter++;
+                        notifyProgress();
+                        loadNext();
                     }
                 });
-        });
+        };
 
-        // Memory Management: Explicitly close old ImageBitmaps if the component unmounts
-        // or re-renders an entirely new sequence to prevent VRAM memory leaks.
+        for (let c = 0; c < CONCURRENCY; c++) {
+            loadNext();
+        }
+
         return () => {
             isCancelled = true;
+            if (rafBatchId !== null) cancelAnimationFrame(rafBatchId);
             imagesRef.current.forEach(bitmap => {
                 if (bitmap) bitmap.close();
             });
         };
-    }, [folderPath, frameCount, isMobile]);
+    }, [folderPath, frameCount, isMobile, requestRender]);
 
-    // 3. Render Loop Interpolator
-    // Checks target frame and tries to render the best available loaded frame towards target
-    useEffect(() => {
-        let animationFrameId: number;
-
-        const loop = () => {
-            if (canvasRef.current) {
-                // Lenis inherently smooths the scroll input! 
-                // Manual frame-lerping is completely deleted to eliminate double-smoothing "heavy" delays.
-                const target = targetFrame.current;
-                const current = currentFrame.current;
-
-                if (target !== current) {
-                    let bestFrame = -1;
-                    
-                    // Look back from target to find the most recently loaded frame!
-                    // If moving forward:
-                    if (target > current) {
-                        for (let i = target; i >= current; i--) {
-                            const img = imagesRef.current[i];
-                            if (img) {
-                                bestFrame = i;
-                                break;
-                            }
-                        }
-                    } else {
-                        // If moving backward:
-                        for (let i = target; i <= current; i++) {
-                            const img = imagesRef.current[i];
-                            if (img) {
-                                bestFrame = i;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (bestFrame !== -1 && bestFrame !== current) {
-                        try {
-                            renderFrame(bestFrame);
-                            currentFrame.current = bestFrame;
-                        } catch(e) {}
-                    }
-                }
-            }
-            animationFrameId = requestAnimationFrame(loop);
-        };
-        loop();
-        return () => cancelAnimationFrame(animationFrameId);
-    }, [renderFrame]);
-
-    // 4. Scroll Handler (Updates Target only)
+    // 3. Scroll Handler (Updates Target & triggers on-demand render with ZERO layout reflow)
     useEffect(() => {
         if (!canvasRef.current) return;
+        updateMeasurements();
 
-        const handleScroll = () => {
-            if (!containerRef.current) return;
+        const onScrollTick = (scrollY: number) => {
+            if (!containerRef.current || !isHeroVisible.current) return;
 
-            const container = containerRef.current;
-            const rect = container.getBoundingClientRect();
-            const viewportHeight = window.innerHeight;
+            const nextTarget = calculateTargetFrame(scrollY);
 
-            const parentTop = rect.top;
-            const maxScroll = rect.height - viewportHeight;
-            if (maxScroll <= 0) return;
-
-            let progress = Math.abs(parentTop) / maxScroll;
-            if (parentTop > 0) progress = 0;
-            progress = Math.max(0, Math.min(1, progress));
-
-            // Complete full animation by 85% of scroll distance.
-            // Leaves an exit buffer on the final frame so the sequence never crawls 1-by-1 at the tail.
-            const ANIMATION_END_PERCENT = 0.85;
-            const animProgress = progress / ANIMATION_END_PERCENT;
-
-            if (animProgress >= 0.96) {
-                targetFrame.current = frameCount - 1;
-                return;
+            if (targetFrame.current !== nextTarget) {
+                targetFrame.current = nextTarget;
+                requestRender();
             }
-
-            // Power 0.9 curve provides instant pickup on initial scroll
-            const curvedProgress = Math.pow(animProgress, 0.9);
-            targetFrame.current = Math.min(
-                frameCount - 1,
-                Math.floor(curvedProgress * frameCount)
-            );
         };
 
-        window.addEventListener("scroll", handleScroll, { passive: true });
-        handleScroll();
+        const handleWindowScroll = () => {
+            onScrollTick(window.scrollY);
+        };
 
-        return () => window.removeEventListener("scroll", handleScroll);
-    }, [frameCount]);
+        const lenis = (window as unknown as { __lenis?: { on: (event: string, cb: (e: { scroll: number }) => void) => void; off: (event: string, cb: (e: { scroll: number }) => void) => void } }).__lenis;
+
+        const handleLenisScroll = (e: { scroll: number }) => {
+            onScrollTick(e.scroll);
+        };
+
+        if (lenis && typeof lenis.on === "function") {
+            lenis.on("scroll", handleLenisScroll);
+        }
+        window.addEventListener("scroll", handleWindowScroll, { passive: true });
+        handleWindowScroll();
+
+        return () => {
+            if (lenis && typeof lenis.off === "function") {
+                lenis.off("scroll", handleLenisScroll);
+            }
+            window.removeEventListener("scroll", handleWindowScroll);
+        };
+    }, [calculateTargetFrame, requestRender, updateMeasurements]);
 
     // Calculate actual progress from 0 to 1
     const actualProgress = loadedCount / requiredFrames;
@@ -303,30 +355,30 @@ export default function SequenceHero() {
     const loadProgress = Math.min(100, Math.floor(easedProgress * 100));
 
     return (
-        <div ref={containerRef} className={`relative ${isMobile ? 'h-[180vh]' : 'h-[280vh]'} bg-black`}>
+        <div ref={containerRef} className={`relative ${isMobile ? 'h-[175vh]' : 'h-[220vh]'} bg-black`}>
             
             {/* Massive Full-Screen Preloader */}
             <div className={`fixed inset-0 z-[100] bg-[#030005] flex flex-col items-center justify-center transition-opacity duration-1000 ${isFullyLoaded ? "opacity-0 pointer-events-none" : "opacity-100 pointer-events-auto"}`}>
-                <div className="w-11/12 max-w-md flex flex-col items-center gap-6">
-                    <h2 className="text-white text-3xl md:text-5xl font-black tracking-[0.4em] uppercase mb-4 italic">
-                        BLACKLINES
+                <div className="w-11/12 max-w-2xl flex flex-col items-center gap-6 px-4">
+                    <h2 className="text-white text-2xl sm:text-3xl md:text-5xl font-black tracking-[0.18em] sm:tracking-[0.25em] uppercase mb-4 italic text-center max-w-full break-words leading-tight pr-2">
+                        {brand.upper}
                     </h2>
                     
-                    <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden relative">
+                    <div className="w-full max-w-md h-1 bg-white/10 rounded-full overflow-hidden relative">
                         <div 
                             className="absolute top-0 left-0 h-full bg-purple-500 shadow-[0_0_20px_#7c3aed] transition-[width] duration-300 ease-out"
                             style={{ width: `${loadProgress}%` }}
                         />
                     </div>
                     
-                    <div className="flex justify-between w-full text-xs font-mono tracking-widest text-purple-400 uppercase font-bold">
-                        <span>Loading Engine Textures</span>
-                        <span>{loadProgress}%</span>
+                    <div className="flex justify-between w-full max-w-md text-xs font-mono tracking-widest text-purple-400 uppercase font-bold">
+                        <span className="truncate pr-2">{brand.isCustomClient ? `Calibrating ${brand.shortName} Assets` : "Loading Engine Textures"}</span>
+                        <span className="shrink-0">{loadProgress}%</span>
                     </div>
                 </div>
             </div>
 
-            <div className="sticky top-0 h-screen w-full overflow-hidden">
+            <div className="sticky top-0 h-screen w-full overflow-hidden transform-gpu will-change-transform">
                 {/* Fallback Background Image visually behind canvas */}
                 <div
                     className="absolute inset-0 bg-cover bg-center z-0"
@@ -335,7 +387,7 @@ export default function SequenceHero() {
 
                 <canvas
                     ref={canvasRef}
-                    className="w-full h-full object-cover relative z-10"
+                    className="w-full h-full object-cover relative z-10 transform-gpu will-change-transform"
                     width={isMobile ? 1080 : 1920}
                     height={isMobile ? 1920 : 1080}
                 />
@@ -387,7 +439,7 @@ export default function SequenceHero() {
                                         </span>
                                     </div>
                                     <p className="text-gray-400 text-[10px] md:text-xs mt-2 font-mono">
-                                        EST. 2024 // TOKYO
+                                        {brand.locationTag}
                                     </p>
                                 </div>
                             </div>

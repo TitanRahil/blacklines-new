@@ -1,16 +1,20 @@
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 
+import { useBrand } from "../context/BrandContext";
+
 export default function Navbar() {
+    const brand = useBrand();
     const [scrolled, setScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const location = useLocation();
 
     useEffect(() => {
         const handleScroll = () => {
-            setScrolled(window.scrollY > 50);
+            const isPast = window.scrollY > 50;
+            setScrolled(prev => (prev !== isPast ? isPast : prev));
         };
-        window.addEventListener("scroll", handleScroll);
+        window.addEventListener("scroll", handleScroll, { passive: true });
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
@@ -40,8 +44,11 @@ export default function Navbar() {
     };
 
     const navLinks = [
+        { name: "Catalog", link: "/#modifications" },
         { name: "Builds", link: "/#builds" },
-        { name: "About", link: "/#about" },
+        { name: "Estimator", link: "/#configurator" },
+        { name: "Book Now", link: "/#booking" },
+        { name: "Atelier", link: "/#about" },
         { name: "FAQ", link: "/#faq" }
     ];
 
@@ -54,20 +61,20 @@ export default function Navbar() {
         >
             <div className="max-w-7xl mx-auto px-6 md:px-20 flex justify-between items-center">
                 {/* Logo Section */}
-                <Link to="/" className="group relative z-10" onClick={() => setIsMobileMenuOpen(false)}>
-                    <div className="flex items-baseline gap-1">
-                        <span className="text-2xl md:text-3xl font-black italic tracking-tighter text-white">
-                            BLACKLINES
+                <Link to="/" className="group relative z-10 block pr-2" onClick={() => setIsMobileMenuOpen(false)}>
+                    <div className="flex items-baseline gap-1.5">
+                        <span className="text-lg sm:text-xl md:text-2xl font-black italic tracking-tight text-white pr-2 whitespace-nowrap truncate max-w-[220px] sm:max-w-[320px] md:max-w-[260px] lg:max-w-[360px] xl:max-w-[480px]">
+                            {brand.upper}
                         </span>
-                        <div className="h-2 w-2 bg-purple-600 rounded-full shadow-[0_0_10px_#7c3aed] group-hover:scale-125 transition-transform" />
+                        <div className="h-2 w-2 bg-purple-600 rounded-full shadow-[0_0_10px_#7c3aed] group-hover:scale-125 transition-transform shrink-0 self-center" />
                     </div>
-                    <span className="text-[0.65rem] font-bold tracking-[0.35em] text-gray-400 absolute -bottom-3 left-1 group-hover:text-purple-400 transition-colors uppercase">
-                        Motorsport
+                    <span className="text-[0.62rem] font-bold tracking-[0.3em] text-gray-400 block -mt-0.5 pl-0.5 group-hover:text-purple-400 transition-colors uppercase whitespace-nowrap">
+                        {brand.isCustomClient ? "ATELIER SPEC" : "MOTORSPORT ATELIER"}
                     </span>
                 </Link>
 
                 {/* Desktop Navigation */}
-                <div className="hidden md:flex items-center gap-12 bg-black/20 backdrop-blur-md px-10 py-3 rounded-full border border-white/5 shadow-2xl">
+                <div className="hidden md:flex items-center gap-8 lg:gap-10 bg-black/20 backdrop-blur-md px-6 lg:px-9 py-3 rounded-full border border-white/5 shadow-2xl">
                     {navLinks.map((item) => (
                         <Link
                             key={item.name}
@@ -87,13 +94,13 @@ export default function Navbar() {
                 {/* Right Side Action */}
                 <div className="hidden md:block">
                     <Link
-                        to="/#modifications"
-                        onClick={(e) => handleHashScroll(e, "/#modifications")}
+                        to="/#configurator"
+                        onClick={(e) => handleHashScroll(e, "/#configurator")}
                         className="relative px-6 py-2.5 overflow-hidden group bg-white/5 border border-white/10 hover:border-purple-500/50 transition-colors rounded-sm"
                     >
                         <div className="absolute inset-0 w-0 bg-purple-600 transition-all duration-[250ms] ease-out group-hover:w-full opacity-10" />
                         <span className="relative text-xs font-bold uppercase tracking-widest text-white group-hover:text-purple-300 transition-colors">
-                            Configure
+                            Estimate Build
                         </span>
                     </Link>
                 </div>

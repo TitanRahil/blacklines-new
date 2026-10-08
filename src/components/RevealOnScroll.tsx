@@ -54,7 +54,7 @@ export const RevealOnScroll = ({ children, width = "fit-content", className = ""
         <div
             ref={ref}
             style={{ width, transitionDelay: `${delay}ms` }}
-            className={`transition-all duration-500 ease-[cubic-bezier(0.17,0.55,0.55,1)] transform ${isVisible ? getVisibleTransform() : getInitialTransform()
+            className={`transition-[opacity,transform] duration-500 ease-[cubic-bezier(0.17,0.55,0.55,1)] will-change-[opacity,transform] transform ${isVisible ? getVisibleTransform() : getInitialTransform()
                 } ${className}`}
         >
             {children}
