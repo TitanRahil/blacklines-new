@@ -425,8 +425,8 @@ export default function SequenceHero() {
                     {/* Bottom Section - Glassmorphism */}
                     <div className="flex justify-between items-end">
                         <div className="flex flex-col items-start gap-4">
-                            {/* Glass Card - Dark on Mobile, Glass on Desktop */}
-                            <div className="backdrop-blur-md bg-black/80 md:bg-white/5 border border-white/10 p-4 md:p-6 rounded-xl overflow-hidden relative group pointer-events-auto transition-all duration-300 md:hover:bg-white/10">
+                            {/* Glass Card - Desktop Only (Hidden on Mobile) */}
+                            <div className="hidden md:block backdrop-blur-md bg-white/5 border border-white/10 p-4 md:p-6 rounded-xl overflow-hidden relative group pointer-events-auto transition-all duration-300 hover:bg-white/10">
                                 <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                 <div className="relative z-10">
                                     <span className="text-purple-400 text-[10px] md:text-xs font-bold tracking-widest uppercase block mb-1">

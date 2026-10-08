@@ -450,6 +450,7 @@ export default function Home() {
     const [activeBuild, setActiveBuild] = useState<FeaturedBuildItem | null>(null);
     const [isCommissionModalOpen, setIsCommissionModalOpen] = useState(false);
     const [commissionPrefill, setCommissionPrefill] = useState<CommissionPrefill | null>(null);
+    const [showAllCatalogMobile, setShowAllCatalogMobile] = useState(false);
 
     const handleOpenCommissionModal = (prefill?: CommissionPrefill) => {
         setCommissionPrefill(prefill || null);
@@ -537,48 +538,80 @@ export default function Home() {
 
                     {/* Catalog Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {categories.map((cat, index) => (
-                            <RevealOnScroll key={cat.id} width="100%" delay={index * 80}>
-                                <button
-                                    type="button"
-                                    onClick={() => handleOpenCategory(cat)}
-                                    className="w-full text-left cursor-pointer group relative h-[440px] rounded-xl border border-white/[0.12] hover:border-purple-500/60 transition-all duration-500 flex flex-col justify-end overflow-hidden bg-[#0a0512] hover:-translate-y-1 shadow-lg hover:shadow-[0_0_30px_rgba(124,58,237,0.2)]"
-                                >
-                                    {/* Bright, Crisp Image */}
-                                    <img
-                                        src={cat.image}
-                                        alt={cat.name}
-                                        loading="lazy"
-                                        className="absolute inset-0 w-full h-full object-cover brightness-[1.12] contrast-[1.05] transition-all duration-700 ease-out group-hover:scale-105 group-hover:brightness-[1.2]"
-                                    />
+                        {categories.map((cat, index) => {
+                            const isHiddenOnMobile = index >= 3 && !showAllCatalogMobile;
+                            return (
+                                <div key={cat.id} className={isHiddenOnMobile ? "hidden md:block" : "block"}>
+                                    <RevealOnScroll width="100%" delay={(index % 3) * 80}>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleOpenCategory(cat)}
+                                            className="w-full text-left cursor-pointer group relative h-[440px] rounded-xl border border-white/[0.12] hover:border-purple-500/60 transition-all duration-500 flex flex-col justify-end overflow-hidden bg-[#0a0512] hover:-translate-y-1 shadow-lg hover:shadow-[0_0_30px_rgba(124,58,237,0.2)]"
+                                        >
+                                            {/* Bright, Crisp Image */}
+                                            <img
+                                                src={cat.image}
+                                                alt={cat.name}
+                                                loading="lazy"
+                                                className="absolute inset-0 w-full h-full object-cover brightness-[1.12] contrast-[1.05] transition-all duration-700 ease-out group-hover:scale-105 group-hover:brightness-[1.2]"
+                                            />
 
-                                    {/* Minimal Bottom-Only Gradient (Leaves Top 60% Fully Bright) */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+                                            {/* Minimal Bottom-Only Gradient (Leaves Top 60% Fully Bright) */}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
 
-                                    {/* Content Bar */}
-                                    <div className="relative z-10 p-7 bg-gradient-to-t from-black via-black/90 to-transparent">
-                                        <span className="font-mono text-[11px] tracking-wider text-purple-400 uppercase block mb-1">
-                                            {cat.detail}
-                                        </span>
-                                        <h3 className="text-2xl font-bold text-white group-hover:text-purple-200 transition-colors uppercase italic mb-2">
-                                            {cat.name}
-                                        </h3>
-                                        <p className="text-gray-300 text-xs leading-relaxed font-light mb-5">
-                                            {cat.desc}
-                                        </p>
+                                            {/* Content Bar */}
+                                            <div className="relative z-10 p-7 bg-gradient-to-t from-black via-black/90 to-transparent">
+                                                <span className="font-mono text-[11px] tracking-wider text-purple-400 uppercase block mb-1">
+                                                    {cat.detail}
+                                                </span>
+                                                <h3 className="text-2xl font-bold text-white group-hover:text-purple-200 transition-colors uppercase italic mb-2">
+                                                    {cat.name}
+                                                </h3>
+                                                <p className="text-gray-300 text-xs leading-relaxed font-light mb-5">
+                                                    {cat.desc}
+                                                </p>
 
-                                        <div className="flex items-center justify-between pt-3 border-t border-white/[0.12] text-xs font-semibold tracking-wider uppercase text-white/90 group-hover:text-purple-300 transition-colors">
-                                            <span>Inspect Specifications</span>
-                                            <div className="w-6 h-6 rounded-full border border-white/20 flex items-center justify-center group-hover:border-purple-400 group-hover:bg-purple-600/30 transition-all">
-                                                <svg className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                                </svg>
+                                                <div className="flex items-center justify-between pt-3 border-t border-white/[0.12] text-xs font-semibold tracking-wider uppercase text-white/90 group-hover:text-purple-300 transition-colors">
+                                                    <span>Inspect Specifications</span>
+                                                    <div className="w-6 h-6 rounded-full border border-white/20 flex items-center justify-center group-hover:border-purple-400 group-hover:bg-purple-600/30 transition-all">
+                                                        <svg className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                                        </svg>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                </button>
-                            </RevealOnScroll>
-                        ))}
+                                        </button>
+                                    </RevealOnScroll>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Mobile "Show More" / "Show Less" Button */}
+                    <div className="mt-8 flex justify-center md:hidden">
+                        {!showAllCatalogMobile ? (
+                            <button
+                                type="button"
+                                onClick={() => setShowAllCatalogMobile(true)}
+                                className="w-full py-3.5 px-6 rounded-xl bg-purple-950/40 border border-purple-500/40 text-purple-200 hover:text-white hover:border-purple-400 hover:bg-purple-900/50 font-mono text-xs uppercase tracking-widest font-bold flex items-center justify-center gap-2.5 shadow-[0_0_20px_rgba(124,58,237,0.2)] transition-all cursor-pointer"
+                            >
+                                <span>Show More ({categories.length - 3} More)</span>
+                                <svg className="w-4 h-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => setShowAllCatalogMobile(false)}
+                                className="py-2.5 px-6 rounded-xl bg-white/[0.04] border border-white/10 text-gray-400 hover:text-white font-mono text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2"
+                            >
+                                <span>Show Less</span>
+                                <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                </svg>
+                            </button>
+                        )}
                     </div>
                 </div>
             </section>
@@ -1243,7 +1276,7 @@ export default function Home() {
                                     className="absolute inset-0 w-full h-full object-cover object-center brightness-[1.04] contrast-[1.04] transition-all duration-700 group-hover:scale-105 group-hover:brightness-[1.1]"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent pointer-events-none" />
-                                <div className="absolute bottom-5 left-5 right-5 p-4 rounded-xl bg-black/75 backdrop-blur-md border border-white/10 shadow-lg">
+                                <div className="hidden sm:block absolute bottom-5 left-5 right-5 p-4 rounded-xl bg-black/75 backdrop-blur-md border border-white/10 shadow-lg">
                                     <span className="text-purple-400 font-mono text-xs tracking-wider uppercase block mb-0.5 font-bold">
                                         {brand.city} Advanced Aerodynamics &amp; Telemetry
                                     </span>

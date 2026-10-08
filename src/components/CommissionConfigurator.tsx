@@ -183,7 +183,7 @@ export default function CommissionConfigurator({ onOpenModal }: Props) {
                                 </span>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
                                 {serviceTiers.map(tier => {
                                     const isSelected = selectedTier.id === tier.id;
                                     return (
@@ -191,28 +191,30 @@ export default function CommissionConfigurator({ onOpenModal }: Props) {
                                             key={tier.id}
                                             type="button"
                                             onClick={() => setSelectedTier(tier)}
-                                            className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer relative ${
+                                            className={`p-2.5 sm:p-3.5 rounded-xl border text-left transition-all cursor-pointer relative flex flex-col justify-between ${
                                                 isSelected
                                                     ? "bg-purple-950/45 border-purple-500 shadow-[0_0_25px_rgba(124,58,237,0.25)]"
                                                     : "bg-[#08040f] border-white/10 hover:border-white/20 hover:bg-[#0c0617]"
                                             }`}
                                         >
-                                            <div className="flex items-center justify-between mb-1">
-                                                <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-white/10 text-purple-300 font-semibold">
-                                                    {tier.badge}
-                                                </span>
-                                                <span className={`text-[10px] font-mono uppercase font-bold ${
-                                                    isSelected ? "text-purple-300" : "text-gray-400"
-                                                }`}>
-                                                    {isSelected ? "● Selected" : "Select"}
-                                                </span>
+                                            <div>
+                                                <div className="flex items-center justify-between gap-1 mb-1">
+                                                    <span className="text-[9px] sm:text-[10px] font-mono uppercase px-1.5 sm:px-2 py-0.5 rounded bg-white/10 text-purple-300 font-semibold truncate">
+                                                        {tier.badge}
+                                                    </span>
+                                                    <span className={`text-[9px] sm:text-[10px] font-mono uppercase font-bold shrink-0 ${
+                                                        isSelected ? "text-purple-300" : "text-gray-400"
+                                                    }`}>
+                                                        {isSelected ? "● Selected" : "Select"}
+                                                    </span>
+                                                </div>
+                                                <h4 className="text-white font-bold text-xs sm:text-sm mb-1 leading-snug">
+                                                    {tier.title}
+                                                </h4>
+                                                <p className="text-gray-400 text-[10px] sm:text-xs font-light leading-snug line-clamp-2">
+                                                    {tier.tagline}
+                                                </p>
                                             </div>
-                                            <h4 className="text-white font-bold text-sm mb-1">
-                                                {tier.title}
-                                            </h4>
-                                            <p className="text-gray-400 text-xs font-light leading-snug line-clamp-2">
-                                                {tier.tagline}
-                                            </p>
                                         </button>
                                     );
                                 })}
