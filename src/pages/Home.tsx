@@ -417,15 +417,19 @@ function AtelierClock() {
     useEffect(() => {
         const updateTime = () => {
             const now = new Date();
-            const isTokyo = brand.city.toLowerCase() === "tokyo";
+            const cityLower = brand.city.toLowerCase();
+            const isUS = cityLower.includes("los angeles") || cityLower.includes("costa mesa") || cityLower === "usa";
+            const isTokyo = cityLower === "tokyo";
+            const timeZone = isUS ? "America/Los_Angeles" : (isTokyo ? "Asia/Tokyo" : undefined);
             const options: Intl.DateTimeFormatOptions = {
-                timeZone: isTokyo ? "Asia/Tokyo" : undefined,
+                timeZone: timeZone,
                 hour: "2-digit",
                 minute: "2-digit",
                 second: "2-digit",
                 hour12: false,
             };
-            setTime(new Intl.DateTimeFormat("en-US", options).format(now) + (isTokyo ? " JST" : " LOCAL"));
+            const tzLabel = isUS ? " PST" : (isTokyo ? " JST" : " LOCAL");
+            setTime(new Intl.DateTimeFormat("en-US", options).format(now) + tzLabel);
         };
         updateTime();
         const timer = setInterval(updateTime, 1000);
@@ -1307,7 +1311,7 @@ export default function Home() {
                                 <div className="border-b border-white/[0.06] pb-3">
                                     <span className="text-[11px] font-mono text-gray-400 uppercase tracking-wider block mb-1">Workshop Address</span>
                                     <p className="text-white text-base font-light">
-                                        {brand.isCustomClient ? `${brand.city} Metropolitan Area • Private Facility (By Appointment)` : "1-chōme-21-1 Jinnan, Shibuya City, Tokyo 150-0041, Japan"}
+                                        {brand.isCustomClient ? `${brand.city} Metropolitan Area • Private Facility, USA (By Appointment)` : "2900 Airway Ave, Suite 100, Costa Mesa, CA 92626, USA"}
                                     </p>
                                 </div>
                                 <div className="border-b border-white/[0.06] pb-3">
@@ -1319,16 +1323,16 @@ export default function Home() {
                                 <div>
                                     <span className="text-[11px] font-mono text-gray-400 uppercase tracking-wider block mb-1">Direct Workshop Phone</span>
                                     <p className="text-white text-base font-light">
-                                        {brand.isCustomClient ? "Private Client Concierge Line" : "+81 3-5550-1337 (09:00 – 18:00 JST)"}
+                                        {brand.isCustomClient ? "+1 (949) 555-0199 (Private Client Concierge)" : "+1 (949) 555-0199 (09:00 - 18:00 PST, USA)"}
                                     </p>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Map embed */}
+                        {/* Map embed - USA Location */}
                         <div className="relative rounded-xl overflow-hidden border border-white/[0.08] bg-[#07030a] h-[360px]">
                             <iframe
-                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3241.7479754723107!2d139.6990596152588!3d35.66933528019708!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x60188ca298813bc3%3A0xe67cb56453f2c58!2sShibuya%20City%2C%20Tokyo%2C%20Japan!5e0!3m2!1sen!2sus!4v1652230000000!5m2!1sen!2sus"
+                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d106297.87612140409!2d-117.96570697223062!3d33.67049449856515!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x80dcd9503460ca49%3A0xbefbe4aa43194519!2sCosta%20Mesa%2C%20CA%2C%20USA!5e0!3m2!1sen!2sus!4v1700000000000!5m2!1sen!2sus"
                                 width="100%"
                                 height="100%"
                                 style={{ border: 0 }}
@@ -1336,6 +1340,7 @@ export default function Home() {
                                 loading="lazy"
                                 referrerPolicy="no-referrer-when-downgrade"
                                 className="opacity-70 hover:opacity-90 transition-opacity duration-700 filter invert-[0.9] hue-rotate-[180deg] contrast-[1.2]"
+                                title="USA Atelier Location Map"
                             />
                         </div>
                     </div>
@@ -1377,7 +1382,7 @@ export default function Home() {
                                 <div className="h-1.5 w-1.5 bg-purple-500 rounded-full" />
                             </div>
                             <span className="text-gray-400 font-mono text-xs tracking-[0.25em] uppercase block">
-                                {brand.isCustomClient ? `Atelier Engineering • ${brand.city}` : "Motorsport Engineering • Shibuya, Tokyo"}
+                                {brand.isCustomClient ? `Atelier Engineering • ${brand.city}` : "Motorsport Engineering • California, USA"}
                             </span>
                             <p className="text-gray-400 text-sm max-w-sm leading-relaxed font-light">
                                 Handcrafted aerodynamic composites, competition engine packages, and bespoke vehicle builds.

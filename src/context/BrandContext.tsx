@@ -13,8 +13,8 @@ export interface BrandConfig {
 }
 
 const DEFAULT_BRAND_NAME = "Apex Atelier";
-const DEFAULT_CITY = "Tokyo";
-const DEFAULT_LOCATION_TAG = "EST. 2024 // PRIVATE FACILITY";
+const DEFAULT_CITY = "Los Angeles";
+const DEFAULT_LOCATION_TAG = "EST. 2024 // PRIVATE FACILITY • USA";
 
 const BrandContext = createContext<BrandConfig>({
     name: DEFAULT_BRAND_NAME,
@@ -101,7 +101,7 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             upper: DEFAULT_BRAND_NAME.toUpperCase(),
             shortName: "Apex",
             city: DEFAULT_CITY,
-            locationTag: "EST. 2024 // PRIVATE FACILITY • TOKYO",
+            locationTag: "EST. 2024 // PRIVATE FACILITY • USA",
             email: "concierge@apexatelier.com",
             isCustomClient: false,
             clientRaw: null,
