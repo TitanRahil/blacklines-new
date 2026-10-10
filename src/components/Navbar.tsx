@@ -74,19 +74,19 @@ export default function Navbar() {
                 </Link>
 
                 {/* Desktop Navigation */}
-                <div className="hidden md:flex items-center gap-8 lg:gap-10 bg-black/20 backdrop-blur-md px-6 lg:px-9 py-3 rounded-full border border-white/5 shadow-2xl">
+                <div className="hidden md:flex items-center gap-7 lg:gap-9 bg-[#080312]/80 backdrop-blur-2xl px-7 lg:px-10 py-3 rounded-full border border-white/[0.08] shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
                     {navLinks.map((item) => (
                         <Link
                             key={item.name}
                             to={item.link}
                             onClick={(e) => handleHashScroll(e, item.link)}
-                            className="relative text-xs font-bold uppercase tracking-[0.15em] text-gray-300 hover:text-white transition-colors group/link overflow-hidden"
+                            className="relative text-xs font-mono font-medium uppercase tracking-[0.2em] text-zinc-300 hover:text-white transition-colors group/link overflow-hidden"
                         >
                             <span className="relative z-10">{item.name}</span>
                             {/* Hover Underline */}
-                            <span className="absolute -bottom-1 left-0 w-full h-[1px] bg-purple-500 transform scale-x-0 group-hover/link:scale-x-100 transition-transform duration-300 origin-left" />
+                            <span className="absolute -bottom-1 left-0 w-full h-[1px] bg-purple-400 transform scale-x-0 group-hover/link:scale-x-100 transition-transform duration-300 origin-left" />
                             {/* Subtle Glow */}
-                            <span className="absolute inset-0 bg-purple-500/20 blur-lg opacity-0 group-hover/link:opacity-100 transition-opacity duration-300" />
+                            <span className="absolute inset-0 bg-purple-500/20 blur-md opacity-0 group-hover/link:opacity-100 transition-opacity duration-300" />
                         </Link>
                     ))}
                 </div>
@@ -96,10 +96,10 @@ export default function Navbar() {
                     <Link
                         to="/#configurator"
                         onClick={(e) => handleHashScroll(e, "/#configurator")}
-                        className="relative px-6 py-2.5 overflow-hidden group bg-white/5 border border-white/10 hover:border-purple-500/50 transition-colors rounded-sm"
+                        className="relative px-5 py-2.5 rounded-xl bg-purple-950/40 hover:bg-purple-900/50 border border-purple-500/40 hover:border-purple-400/80 transition-all duration-300 group inline-flex items-center gap-2 shadow-[0_0_20px_rgba(124,58,237,0.2)] hover:shadow-[0_0_30px_rgba(168,85,247,0.4)]"
                     >
-                        <div className="absolute inset-0 w-0 bg-purple-600 transition-all duration-[250ms] ease-out group-hover:w-full opacity-10" />
-                        <span className="relative text-xs font-bold uppercase tracking-widest text-white group-hover:text-purple-300 transition-colors">
+                        <span className="w-1.5 h-1.5 rounded-full bg-purple-400 group-hover:bg-emerald-400 transition-colors animate-pulse" />
+                        <span className="text-xs font-mono font-bold uppercase tracking-widest text-white group-hover:text-purple-200 transition-colors">
                             Estimate Build
                         </span>
                     </Link>

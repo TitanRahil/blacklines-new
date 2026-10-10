@@ -132,8 +132,23 @@ export default function CommissionConfigurator({ onOpenModal }: Props) {
                 {/* Main Interactive Grid - Compact 2-column layout */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                     
-                    {/* Left Column: Compact Selectors (7 cols) */}
-                    <div className="lg:col-span-7 xl:col-span-8 space-y-6">
+                    {/* Left Column: Compact Selectors (7 cols) - Styled with outer card on mobile */}
+                    <div className="lg:col-span-7 xl:col-span-8 space-y-5 sm:space-y-6 bg-gradient-to-b from-[#0e071e]/95 via-[#090414]/95 to-[#06020c]/98 border border-purple-500/30 rounded-2xl p-4 sm:p-6 shadow-[0_15px_50px_rgba(0,0,0,0.7)] relative overflow-hidden lg:border-none lg:bg-transparent lg:p-0 lg:rounded-none lg:shadow-none">
+                        {/* Ambient top highlight line on mobile */}
+                        <div className="lg:hidden absolute top-0 left-1/4 right-1/4 h-[1px] bg-gradient-to-r from-transparent via-purple-400/50 to-transparent pointer-events-none" />
+
+                        {/* Mobile Card Header Badge */}
+                        <div className="lg:hidden flex items-center justify-between pb-3.5 border-b border-white/[0.08] mb-1">
+                            <div className="flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+                                <span className="text-[10px] font-mono tracking-widest text-purple-300 uppercase font-bold">
+                                    Configuration Parameters
+                                </span>
+                            </div>
+                            <span className="text-[10px] font-mono text-zinc-400">
+                                3 Steps
+                            </span>
+                        </div>
                         
                         {/* 1. Vehicle Platform Segmented Selector */}
                         <div>
@@ -142,7 +157,7 @@ export default function CommissionConfigurator({ onOpenModal }: Props) {
                                     <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
                                     1. Vehicle Platform
                                 </span>
-                                <span className="text-[11px] font-mono text-gray-400">
+                                <span className="text-[11px] font-mono text-gray-400 truncate max-w-[150px] sm:max-w-none">
                                     Selected: <span className="text-white font-semibold">{selectedPlatform.name}</span>
                                 </span>
                             </div>
@@ -157,8 +172,8 @@ export default function CommissionConfigurator({ onOpenModal }: Props) {
                                             onClick={() => setSelectedPlatform(p)}
                                             className={`p-3 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${
                                                 isSelected
-                                                    ? "bg-purple-950/50 border-purple-500 shadow-[0_0_20px_rgba(124,58,237,0.3)] text-white"
-                                                    : "bg-[#08040f] border-white/10 text-gray-400 hover:border-white/25 hover:text-white hover:bg-[#0d0718]"
+                                                    ? "bg-purple-950/60 border-purple-500 shadow-[0_0_20px_rgba(124,58,237,0.3)] text-white"
+                                                    : "bg-[#130a26]/80 lg:bg-[#08040f] border-white/10 text-gray-400 hover:border-white/25 hover:text-white hover:bg-[#1a0e33]"
                                             }`}
                                         >
                                             <span className="text-lg">{p.icon}</span>
@@ -172,7 +187,7 @@ export default function CommissionConfigurator({ onOpenModal }: Props) {
                         </div>
 
                         {/* 2. Service Package (Compact 2x2 grid) */}
-                        <div>
+                        <div className="pt-4 border-t border-white/[0.08] lg:border-t-0 lg:pt-0">
                             <div className="flex items-center justify-between mb-2.5">
                                 <span className="text-xs font-mono uppercase tracking-wider text-gray-300 font-semibold flex items-center gap-2">
                                     <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
@@ -193,8 +208,8 @@ export default function CommissionConfigurator({ onOpenModal }: Props) {
                                             onClick={() => setSelectedTier(tier)}
                                             className={`p-2.5 sm:p-3.5 rounded-xl border text-left transition-all cursor-pointer relative flex flex-col justify-between ${
                                                 isSelected
-                                                    ? "bg-purple-950/45 border-purple-500 shadow-[0_0_25px_rgba(124,58,237,0.25)]"
-                                                    : "bg-[#08040f] border-white/10 hover:border-white/20 hover:bg-[#0c0617]"
+                                                    ? "bg-purple-950/60 border-purple-500 shadow-[0_0_25px_rgba(124,58,237,0.25)]"
+                                                    : "bg-[#130a26]/80 lg:bg-[#08040f] border-white/10 hover:border-white/20 hover:bg-[#1a0e33]"
                                             }`}
                                         >
                                             <div>
@@ -222,7 +237,7 @@ export default function CommissionConfigurator({ onOpenModal }: Props) {
                         </div>
 
                         {/* 3. Optional Add-ons (Single Row of Pills) */}
-                        <div>
+                        <div className="pt-4 border-t border-white/[0.08] lg:border-t-0 lg:pt-0">
                             <span className="text-xs font-mono uppercase tracking-wider text-gray-300 font-semibold flex items-center gap-2 mb-2.5">
                                 <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
                                 3. Optional Add-ons
@@ -238,8 +253,8 @@ export default function CommissionConfigurator({ onOpenModal }: Props) {
                                             onClick={() => toggleAddOn(item.id)}
                                             className={`px-3 py-2 rounded-lg border text-xs font-mono flex items-center gap-2 cursor-pointer transition-all ${
                                                 isChecked
-                                                    ? "bg-purple-950/50 border-purple-500 text-white shadow-[0_0_15px_rgba(124,58,237,0.2)]"
-                                                    : "bg-[#08040f] border-white/10 text-gray-400 hover:border-white/20 hover:text-gray-200"
+                                                    ? "bg-purple-950/60 border-purple-500 text-white shadow-[0_0_15px_rgba(124,58,237,0.2)]"
+                                                    : "bg-[#130a26]/80 lg:bg-[#08040f] border-white/10 text-gray-400 hover:border-white/20 hover:text-gray-200"
                                             }`}
                                         >
                                             <span className={`w-3.5 h-3.5 rounded flex items-center justify-center text-[10px] ${

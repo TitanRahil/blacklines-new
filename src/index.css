@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -6,12 +6,16 @@
     --foreground: #ededed;
     --accent: #7c3aed;
     --accent-glow: #8b5cf6;
-    --card-bg: rgba(15, 10, 20, 0.6);
-    --font-outfit: "Outfit", sans-serif;
+    --card-bg: rgba(12, 8, 18, 0.75);
+    --font-sans: 'Space Grotesk', -apple-system, sans-serif;
+    --font-display: 'Syne', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
 }
 
 @theme inline {
-    --font-sans: var(--font-outfit), sans-serif;
+    --font-sans: var(--font-sans);
+    --font-display: var(--font-display);
+    --font-mono: var(--font-mono);
     --color-background: var(--background);
     --color-foreground: var(--foreground);
     --color-accent: var(--accent);
@@ -20,7 +24,7 @@
 body {
     background: var(--background);
     color: var(--foreground);
-    font-family: var(--font-outfit), sans-serif;
+    font-family: var(--font-sans);
     overflow-x: hidden;
 }
 
@@ -44,16 +48,43 @@ body {
 
 .glass-card {
     background: var(--card-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(139, 92, 246, 0.15);
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
 }
 
 .glass-card:hover {
-    border-color: rgba(139, 92, 246, 0.4);
-    background: rgba(20, 15, 30, 0.7);
-    box-shadow: 0 0 25px rgba(124, 58, 237, 0.2);
+    border-color: rgba(168, 85, 247, 0.35);
+    border-top-color: rgba(216, 180, 254, 0.5);
+    background: rgba(18, 12, 28, 0.82);
+    box-shadow: 0 16px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(124, 58, 237, 0.15);
+}
+
+.carbon-panel {
+    background: radial-gradient(circle at 50% 0%, rgba(30, 15, 45, 0.45) 0%, rgba(7, 3, 12, 0.95) 75%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid rgba(168, 85, 247, 0.3);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+}
+
+.tech-grid-pattern {
+    background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+}
+
+.telemetry-tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(124, 58, 237, 0.12);
+    border: 1px solid rgba(168, 85, 247, 0.25);
+    color: #d8b4fe;
 }
 
 .text-glow {

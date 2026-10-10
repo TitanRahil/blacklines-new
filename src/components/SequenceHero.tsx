@@ -95,13 +95,13 @@ export default function SequenceHero() {
                 const vRatio = canvas.height / img.height;
                 const ratio = Math.max(hRatio, vRatio);
 
-                const centerShift_x = (canvas.width - img.width * ratio) * 0.5;
+                const centerShift_x = isMobile ? 0 : (canvas.width - img.width * ratio) * 0.5;
                 const centerShift_y = (canvas.height - img.height * ratio) * 0.5;
 
                 context.drawImage(img, 0, 0, img.width, img.height, centerShift_x, centerShift_y, img.width * ratio, img.height * ratio);
             }
         }
-    }, []);
+    }, [isMobile]);
 
     // 60-120 FPS render scheduler with recursive catch-up loop:
     // Only fires RAF when frames differ, continuously stepping until caught up.
@@ -381,13 +381,13 @@ export default function SequenceHero() {
             <div className="sticky top-0 h-screen w-full overflow-hidden transform-gpu will-change-transform">
                 {/* Fallback Background Image visually behind canvas */}
                 <div
-                    className="absolute inset-0 bg-cover bg-center z-0"
+                    className="absolute inset-0 bg-cover bg-left lg:bg-center z-0"
                     style={{ backgroundImage: `url('${folderPath}/0001.webp')` }}
                 />
 
                 <canvas
                     ref={canvasRef}
-                    className="w-full h-full object-cover relative z-10 transform-gpu will-change-transform"
+                    className="w-full h-full object-cover object-left lg:object-center relative z-10 transform-gpu will-change-transform"
                     width={isMobile ? 720 : 1920}
                     height={isMobile ? 1280 : 1080}
                 />
@@ -398,26 +398,26 @@ export default function SequenceHero() {
                 <div className="absolute inset-0 bg-radial-gradient from-transparent to-black pointer-events-none opacity-50 z-20" />
 
                 {/* Text Overlays - Desktop & Mobile */}
-                <div className="absolute inset-0 z-30 flex flex-col justify-between px-6 pt-24 pb-12 md:px-20 md:pt-32 md:pb-12 pointer-events-none">
+                <div className="absolute inset-0 z-30 flex flex-col justify-between px-4 sm:px-6 pt-24 pb-12 md:px-20 md:pt-32 md:pb-12 pointer-events-none">
                     {/* Top Text - Classic Inverted Design */}
                     <div className="flex flex-col items-start relative mix-blend-difference">
                         {/* Thin Technical Line */}
-                        <div className="absolute left-0 top-2 h-[85%] w-[2px] bg-purple-500 opacity-80" />
+                        <div className="absolute left-0 top-1.5 h-[85%] w-[2px] bg-purple-500 opacity-80" />
 
-                        <div className="pl-6 md:pl-10 flex flex-col justify-center">
-                            <h2 className="text-white text-lg md:text-3xl font-light tracking-[0.8em] uppercase mb-4 md:mb-2 z-10 ml-2 md:ml-4">
+                        <div className="pl-3.5 sm:pl-6 md:pl-10 flex flex-col justify-center">
+                            <h2 className="text-white/90 text-xs sm:text-sm md:text-2xl font-mono font-medium tracking-[0.45em] md:tracking-[0.6em] uppercase mb-2 z-10 ml-1 md:ml-4">
                                 BEYOND
                             </h2>
-                            {/* Massive Premium Glass Text - Verdana Font */}
+                            {/* Massive Sculptural Display Text - Perfectly proportioned for mobile viewports */}
                             <h1
-                                className="text-[17vw] md:text-[15vw] 2xl:text-[14rem] leading-[0.85] font-black uppercase tracking-tight text-glass-premium"
-                                style={{ fontFamily: 'Verdana, sans-serif' }}
+                                className="text-[13vw] sm:text-[15vw] md:text-[15vw] 2xl:text-[14rem] leading-[0.88] md:leading-[0.82] font-black uppercase tracking-tighter md:tracking-tight text-glass-premium"
+                                style={{ fontFamily: "'Syne', sans-serif" }}
                             >
                                 STOCK
                             </h1>
                             {/* Aligned Tagline (Desktop Only) */}
-                            <p className="hidden md:block text-purple-200 font-mono text-xs md:text-sm tracking-[0.4em] uppercase mt-4 md:mt-6 ml-2 md:ml-4 opacity-80">
-                                // Elevate Your Drive
+                            <p className="hidden md:block text-purple-300 font-mono text-xs md:text-sm tracking-[0.35em] uppercase mt-4 md:mt-6 ml-2 md:ml-4 opacity-90">
+                                // Bespoke Engineering &amp; Telemetry
                             </p>
                         </div>
                     </div>
@@ -426,27 +426,30 @@ export default function SequenceHero() {
                     <div className="flex justify-between items-end">
                         <div className="flex flex-col items-start gap-4">
                             {/* Glass Card - Desktop Only (Hidden on Mobile) */}
-                            <div className="hidden md:block backdrop-blur-md bg-white/5 border border-white/10 p-4 md:p-6 rounded-xl overflow-hidden relative group pointer-events-auto transition-all duration-300 hover:bg-white/10">
-                                <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                            <div className="hidden md:block backdrop-blur-xl bg-[#090514]/85 border border-white/10 hover:border-purple-500/40 p-4 md:p-6 rounded-2xl overflow-hidden relative group pointer-events-auto transition-all duration-300 shadow-[0_10px_35px_rgba(0,0,0,0.6)]">
+                                <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/15 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                                 <div className="relative z-10">
-                                    <span className="text-purple-400 text-[10px] md:text-xs font-bold tracking-widest uppercase block mb-1">
-                                        System Status
-                                    </span>
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                        <span className="text-white font-mono text-sm md:text-base font-bold">
+                                    <div className="flex items-center justify-between gap-6 mb-2">
+                                        <span className="text-purple-400 font-mono text-[10px] md:text-xs font-bold tracking-[0.25em] uppercase">
+                                            Telemetry Core
+                                        </span>
+                                        <span className="text-[10px] font-mono text-emerald-400 px-2 py-0.5 rounded-full bg-emerald-950/40 border border-emerald-500/30 flex items-center gap-1.5">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                                             ONLINE
                                         </span>
                                     </div>
-                                    <p className="text-gray-400 text-[10px] md:text-xs mt-2 font-mono">
+                                    <div className="text-white font-mono text-sm md:text-base font-bold">
+                                        {brand.shortName} ATELIER CELL
+                                    </div>
+                                    <p className="text-gray-400 text-[10px] md:text-xs mt-1.5 font-mono">
                                         {brand.locationTag}
                                     </p>
                                 </div>
                             </div>
 
                             {/* Mobile-Only Tagline - Placed Below System Status */}
-                            <p className="text-purple-200 font-mono text-[10px] tracking-[0.2em] uppercase block md:hidden opacity-80 pl-1">
-                                // ELEVATE YOUR DRIVE
+                            <p className="text-purple-200 font-mono text-[10px] tracking-[0.25em] uppercase block md:hidden opacity-90 pl-1">
+                                // ATELIER SPEC &bull; {brand.city.toUpperCase()}
                             </p>
                         </div>
 
