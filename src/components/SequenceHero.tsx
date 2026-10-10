@@ -17,7 +17,7 @@ export default function SequenceHero() {
 
     const [isMobile, setIsMobile] = useState(getInitialMobileState);
     const [folderPath, setFolderPath] = useState(() => getInitialMobileState() ? "/frames-gtr-mobile" : "/frames");
-    const frameCount = 192;
+    const frameCount = isMobile ? 215 : 192;
     // We now enforce the strictest loading block possible. 
     // The user prefers watching a loaders for 7-8s rather than experiencing broken 12fps scrolls while loading.
     const requiredFrames = frameCount;
@@ -388,8 +388,8 @@ export default function SequenceHero() {
                 <canvas
                     ref={canvasRef}
                     className="w-full h-full object-cover relative z-10 transform-gpu will-change-transform"
-                    width={isMobile ? 1080 : 1920}
-                    height={isMobile ? 1920 : 1080}
+                    width={isMobile ? 720 : 1920}
+                    height={isMobile ? 1280 : 1080}
                 />
 
                 {/* Instant Loading - The overlay is removed to allow low-fps scroll right away */}
