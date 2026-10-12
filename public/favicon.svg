@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="neonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c084fc" />
+      <stop offset="100%" stop-color="#7c3aed" />
+    </linearGradient>
+    <linearGradient id="shadowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9333ea" stop-opacity="0.85" />
+      <stop offset="100%" stop-color="#581c87" stop-opacity="0.4" />
+    </linearGradient>
+  </defs>
+  <!-- Dark Obsidian Atelier Background -->
+  <rect width="512" height="512" rx="100" fill="#030005" />
+  <!-- Vibrant Electric Border -->
+  <rect x="16" y="16" width="480" height="480" rx="90" fill="none" stroke="url(#neonGrad)" stroke-width="12" />
+  <!-- High-Downforce Aerodynamic Drop Shade -->
+  <polygon points="105,430 155,430 285,110 235,110" fill="url(#shadowGrad)" />
+  <!-- Apex Monogram Bold Sharp Glyph -->
+  <polygon points="256,110 140,410 195,410 235,305 325,305 290,210" fill="#ffffff" />
+  <polygon points="256,110 372,410 317,410 285,325 235,305 290,210" fill="#ede9fe" />
+  <polygon points="242,280 256,210 278,280" fill="#030005" />
+  <!-- Telemetry Pulse Beacon -->
+  <circle cx="395" cy="140" r="22" fill="url(#neonGrad)" />
+  <circle cx="395" cy="140" r="10" fill="#ffffff" />
+</svg>

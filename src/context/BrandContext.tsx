@@ -114,6 +114,40 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         } else {
             document.title = "Apex Atelier // High-Performance Automotive Engineering";
         }
+
+        // Dynamically update favicon based on brand initial
+        try {
+            const initial = (brandConfig.shortName || brandConfig.name || "A").charAt(0).toUpperCase();
+            let link = document.querySelector<HTMLLinkElement>("link[rel~='icon']");
+            if (!link) {
+                link = document.createElement("link");
+                link.rel = "icon";
+                document.head.appendChild(link);
+            }
+
+            if (initial === "A" && !brandConfig.isCustomClient) {
+                link.href = "/favicon.svg";
+                link.type = "image/svg+xml";
+            } else {
+                const customSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="neonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c084fc" />
+      <stop offset="100%" stop-color="#7c3aed" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="100" fill="#030005" />
+  <rect x="16" y="16" width="480" height="480" rx="90" fill="none" stroke="url(#neonGrad)" stroke-width="12" />
+  <text x="256" y="355" font-family="'Syne', 'Montserrat', system-ui, sans-serif" font-size="280" font-weight="900" font-style="italic" fill="#ffffff" text-anchor="middle">${initial}</text>
+  <circle cx="395" cy="140" r="22" fill="url(#neonGrad)" />
+  <circle cx="395" cy="140" r="10" fill="#ffffff" />
+</svg>`;
+                link.href = `data:image/svg+xml;utf8,${encodeURIComponent(customSvg)}`;
+                link.type = "image/svg+xml";
+            }
+        } catch {
+            // Non-critical fallback
+        }
     }, [brandConfig]);
 
     return (

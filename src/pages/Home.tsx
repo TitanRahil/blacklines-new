@@ -455,6 +455,22 @@ export default function Home() {
     const [isCommissionModalOpen, setIsCommissionModalOpen] = useState(false);
     const [commissionPrefill, setCommissionPrefill] = useState<CommissionPrefill | null>(null);
     const [showAllCatalogMobile, setShowAllCatalogMobile] = useState(false);
+    
+    // Dynamic Responsive Catalog Heading
+    const catalogHeading = `${brand.upper} CATALOG`;
+    const catalogHeadingSize = catalogHeading.length > 28
+        ? "text-2xl sm:text-3xl md:text-4xl lg:text-[2.6rem]"
+        : catalogHeading.length > 18
+        ? "text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem]"
+        : "text-4xl sm:text-5xl md:text-6xl";
+
+    // Dynamic Responsive Works / Hall of Legends Heading (proportioned so name fits comfortably)
+    const worksHeading = `WORKS OF ${brand.upper}`;
+    const worksHeadingSize = worksHeading.length > 28
+        ? "text-2xl sm:text-3xl md:text-4xl lg:text-[2.25rem]"
+        : worksHeading.length > 18
+        ? "text-2xl sm:text-3xl md:text-4xl lg:text-[2.75rem]"
+        : "text-3xl sm:text-4xl md:text-5xl";
 
     const handleOpenCommissionModal = (prefill?: CommissionPrefill) => {
         setCommissionPrefill(prefill || null);
@@ -525,17 +541,17 @@ export default function Home() {
 
                 <div className="max-w-7xl mx-auto relative z-10">
                     {/* Editorial Header */}
-                    <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 md:mb-24 gap-6 border-b border-white/[0.08] pb-10">
-                        <div>
+                    <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 md:mb-24 gap-6 md:gap-10 border-b border-white/[0.08] pb-10">
+                        <div className="flex-1 min-w-0 max-w-3xl">
                             <span className="text-purple-400 font-mono text-xs tracking-[0.3em] uppercase block mb-3">
                                 The Catalog of {brand.name}
                             </span>
-                            <h2 className="text-4xl sm:text-5xl md:text-6xl font-black uppercase tracking-tight text-white">
-                                <CyberScramble text="PERFORMANCE CATALOG" />
+                            <h2 className={`${catalogHeadingSize} font-black uppercase tracking-tight text-white leading-[1.08] break-words`}>
+                                <CyberScramble text={catalogHeading} />
                             </h2>
                         </div>
 
-                        <p className="text-gray-400 text-sm md:text-base max-w-md font-light leading-relaxed">
+                        <p className="text-gray-400 text-sm md:text-base max-w-md shrink-0 font-light leading-relaxed">
                             Explore {brand.name}&apos;s bespoke hardware and craftsmanship disciplines. Click any category to inspect technical specifications, wind-tunnel data, and available variations without leaving the page.
                         </p>
                     </div>
@@ -896,16 +912,16 @@ export default function Home() {
 
                 <div className="max-w-7xl mx-auto relative z-10">
                     {/* Header */}
-                    <div className="mb-16 md:mb-24 flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/[0.08] pb-10">
-                        <div>
+                    <div className="mb-16 md:mb-24 flex flex-col md:flex-row md:items-end justify-between gap-6 md:gap-10 border-b border-white/[0.08] pb-10">
+                        <div className="flex-1 min-w-0 max-w-3xl">
                             <span className="text-purple-400 font-mono text-xs tracking-[0.3em] uppercase block mb-3">
-                                Bespoke Commissions of {brand.name}
+                                Hall of Legends // {brand.name} Commissions
                             </span>
-                            <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-white uppercase tracking-tight">
-                                <CyberScramble text="HALL OF LEGENDS" />
+                            <h2 className={`${worksHeadingSize} font-black text-white uppercase tracking-tight leading-[1.1] break-words`}>
+                                <CyberScramble text={worksHeading} />
                             </h2>
                         </div>
-                        <p className="text-gray-400 font-light text-sm md:text-base max-w-md">
+                        <p className="text-gray-400 font-light text-sm md:text-base max-w-md shrink-0">
                             Signature vehicle transformations forged at the {brand.name} {brand.city} atelier. Built without compromise for track and street.
                         </p>
                     </div>
